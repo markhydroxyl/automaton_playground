@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
 	Regex *regex = new Regex(argv[1]);
 
 	std::string s;
-	while (std::cin >> s) {
+	while (std::getline(std::cin, s)) {
 		std::cout << regex->match(s) << std::endl;
 	}
 
@@ -42,7 +42,7 @@ Regex::Regex(std::string regex) : _r(regex) {}
 
 Regex::~Regex() {}
 
-bool Regex::match(std::string str) {
+bool Regex::match(std::string str) const {
 	str = str;
 	fatal_error("Regex not implemented.");
 	return false;
