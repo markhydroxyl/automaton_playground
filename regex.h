@@ -5,9 +5,9 @@
 
 #define ACCEPT -1
 #define EPS -2
-#define ALPHA -3
-#define NUMER -4
-#define WHTSP -5
+// #define ALPHA -3
+// #define NUMER -4
+// #define WHTSP -5
 
 // wrapper class for any regex implementation
 class Regex {

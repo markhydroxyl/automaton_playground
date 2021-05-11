@@ -3,8 +3,8 @@
  */
 
 #include <iostream>
-#include <string>
 #include "regex.h"
+#include "graph_nfa.h"
 
 int main(int argc, char *argv[]) {
 	if (argc == 1) {
@@ -15,12 +15,13 @@ int main(int argc, char *argv[]) {
 	}
 
 	// TODO: use a derived class' implementation.
-	Regex *regex = new Regex(argv[1]);
+	Regex *regex = new GraphNFARegex(argv[1]);
+	std::cout << regex->to_str() << std::endl;
 
-	std::string s;
-	while (std::getline(std::cin, s)) {
-		std::cout << regex->match(s) << std::endl;
-	}
+	// std::string s;
+	// while (std::getline(std::cin, s)) {
+	// 	std::cout << regex.match(s) << std::endl;
+	// }
 
 	delete regex;
 
