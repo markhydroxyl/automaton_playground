@@ -243,8 +243,52 @@ string GraphNFARegex::to_str() const {
 	return nfa.to_str();
 }
 
+/**
+ * Determines whether the NFA accepts the string.
+ */
+bool GraphNFA::match(str_iter head, str_iter end) const {
+	std::set<GraphNFAState *> *cur = new std::set<GraphNFAState *>(),
+							*next = new std::set<GraphNFAState *>(),
+							*t;
+	
+	add_to_state_set(start, cur);
+	for (; head != end; ++head) {
+		for (GraphNFAState *s : *cur) {
+			if (s->_t == *head) // if transition matches
+				add_to_state_set(s->next, next);
+		}
+		t = cur; cur = next; next = t; // swap
+		next->clear();
+	}
+
+	bool accept = false;
+	for (GraphNFAState *s : *cur) {
+		if (s->_t == ACCEPT) {
+			accept = true;
+			break;
+		}
+	}
+
+	delete cur;
+	delete next;
+	return accept;
+}
+
+/**
+ * A helper function to properly add a state to the set of states when
+ * simulating the NFA.
+ */
+void GraphNFA::add_to_state_set(GraphNFAState *s, std::set<GraphNFAState *> *set) const {
+	if (s) {
+		if (s->_t == EPS) {
+			add_to_state_set(s->next, set);
+			add_to_state_set(s->fork, set);
+		} else {
+			set->insert(s);
+		}
+	}
+}
+
 bool GraphNFARegex::match(std::string str) const {
-	// TODO: stub
-	str = str;
-	return false;
+	return nfa.match(str.cbegin(), str.cend());
 }

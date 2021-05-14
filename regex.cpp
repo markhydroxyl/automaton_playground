@@ -18,10 +18,10 @@ int main(int argc, char *argv[]) {
 	Regex *regex = new GraphNFARegex(argv[1]);
 	std::cout << regex->to_str() << std::endl;
 
-	// std::string s;
-	// while (std::getline(std::cin, s)) {
-	// 	std::cout << regex.match(s) << std::endl;
-	// }
+	std::string s;
+	while (std::getline(std::cin, s)) {
+		std::cout << (regex->match(s)?"true":"false") << std::endl;
+	}
 
 	delete regex;
 

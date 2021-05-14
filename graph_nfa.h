@@ -1,8 +1,14 @@
+/**
+ * Header file for Graph NFAs.
+ * Heavily inspired by https://swtch.com/~rsc/regexp/regexp1.html
+ */
+
 #ifndef GRAPH_NFA_H
 #define GRAPH_NFA_H
 
 #include <string>
 #include <vector>
+#include <set>
 #include "regex.h"
 
 struct GraphNFAState {
@@ -20,6 +26,7 @@ struct GraphNFA {
 	~GraphNFA();
 	void destroy_states();
 	std::string to_str() const;
+	bool match(std::string::const_iterator head, std::string::const_iterator end) const;
 	void connect_dangling(GraphNFAState *s);
   private:
 	GraphNFAState *start;
@@ -29,6 +36,7 @@ struct GraphNFA {
 	void concat(GraphNFA *n);
 	void nfa_union(GraphNFA *n);
 	void unary(bool zero, bool inf);
+	void add_to_state_set(GraphNFAState *s, std::set<GraphNFAState *> *set) const;
 };
 
 class GraphNFARegex: public Regex {
