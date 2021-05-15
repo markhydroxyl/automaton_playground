@@ -11,7 +11,7 @@
 using std::string;
 typedef string::const_iterator str_iter;
 
-ArrayNFA::ArrayNFAElem::ArrayNFAElem(std::vector<std::array<int, 3>> *states, int start) : empty(true), start(start), tail(0), states(states) {
+ArrayNFA::ArrayNFAElem::ArrayNFAElem(std::vector<std::array<int, 3>> *states, int start) : start(start), tail(start), states(states) {
 	dangling = new std::vector<std::pair<int, int>>();
 }
 
@@ -20,7 +20,6 @@ ArrayNFA::ArrayNFAElem::~ArrayNFAElem() {
 }
 
 void ArrayNFA::ArrayNFAElem::reinit(int start) {
-	this->empty = true;
 	this->start = start;
 	this->tail = start;
 	this->dangling->clear();
@@ -28,7 +27,6 @@ void ArrayNFA::ArrayNFAElem::reinit(int start) {
 
 void ArrayNFA::ArrayNFAElem::reinit(int start, int _t) {
 	(*states)[start][0] = _t;
-	this->empty = false;
 	this->start = start;
 	this->tail = start + 1;
 	this->dangling->clear();
@@ -133,7 +131,7 @@ void ArrayNFA::ArrayNFAElem::connect_dangling(int idx) {
 }
 
 void ArrayNFA::ArrayNFAElem::unary(bool zero, bool inf) {
-	if (!empty) {
+	if (start < tail) {
 		(*states)[tail][0] = EPS;
 		(*states)[tail][1] = start;
 		if (zero) start = tail;
@@ -143,11 +141,10 @@ void ArrayNFA::ArrayNFAElem::unary(bool zero, bool inf) {
 }
 
 void ArrayNFA::ArrayNFAElem::concat(ArrayNFAElem *n) {
-	if (!n->empty) {
-		if (empty) {
+	if (n->start < n->tail) {
+		if (start >= tail)
 			start = n->start;
-			empty = false;
-		} else
+		else
 			connect_dangling(n->start);
 
 		tail = n->tail;
@@ -159,16 +156,18 @@ void ArrayNFA::ArrayNFAElem::concat(ArrayNFAElem *n) {
 }
 
 void ArrayNFA::ArrayNFAElem::nfa_union(ArrayNFAElem *n) {
-	if (empty)
-		concat(n);
+	if (n->start < n->tail) {
+		if (start >= tail)
+			concat(n);
 
-	tail = n->tail;
-	(*states)[tail][0] = EPS;
-	(*states)[tail][1] = start;
-	(*states)[tail][2] = n->start;
-	start = tail++;
-	for (std::pair<int, int> p : *n->dangling)
-		dangling->push_back(p);
+		tail = n->tail;
+		(*states)[tail][0] = EPS;
+		(*states)[tail][1] = start;
+		(*states)[tail][2] = n->start;
+		start = tail++;
+		for (std::pair<int, int> p : *n->dangling)
+			dangling->push_back(p);
+	}
 }
 
 bool ArrayNFARegex::match(std::string str) const {
@@ -176,8 +175,41 @@ bool ArrayNFARegex::match(std::string str) const {
 }
 
 bool ArrayNFA::match(str_iter head, str_iter end) const {
-	// TODO: stub
-	head = head;
-	end = end;
-	return false;
+	const unsigned size = states.size();
+	std::vector<bool> *cur = new std::vector<bool>(size, false), 
+					*next = new std::vector<bool>(size, false),
+					*t;
+	
+	add_to_state_set(start, cur);
+	for (; head != end; ++head) {
+		for (unsigned idx=0; idx < size; ++idx) {
+			if ((*cur)[idx] && states[idx][0] == *head) // if in cur set and correct transition
+				add_to_state_set(states[idx][1], next);
+
+			(*cur)[idx] = false;
+		}
+		t = cur; cur = next; next = t; // swap
+	}
+
+	bool accept = false;
+	for (unsigned idx=0; idx < size; ++idx) {
+		if ((*cur)[idx] && states[idx][0] == ACCEPT) {
+			accept = true;
+			break;
+		}
+	}
+	delete cur;
+	delete next;
+	return accept;
+}
+
+void ArrayNFA::add_to_state_set(int idx, std::vector<bool> *vec) const {
+	if (idx >= 0) {
+		if (states[idx][0] == EPS) {
+			add_to_state_set(states[idx][1], vec);
+			add_to_state_set(states[idx][2], vec);
+		} else {
+			(*vec)[idx] = true;
+		}
+	}
 }

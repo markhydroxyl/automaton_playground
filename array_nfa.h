@@ -12,7 +12,6 @@
 #include <utility>
 #include "regex.h"
 
-
 struct ArrayNFA {
   public:
 	ArrayNFA(std::string regex, int len);
@@ -20,7 +19,6 @@ struct ArrayNFA {
 	bool match(std::string::const_iterator head, std::string::const_iterator end) const;
   private:
 	struct ArrayNFAElem {
-		bool empty;
 		int start;
 		int tail;
 		std::vector<std::array<int, 3>> *states;
@@ -40,6 +38,7 @@ struct ArrayNFA {
 
 	int start;
 	std::vector<std::array<int, 3>> states;
+	void add_to_state_set(int idx, std::vector<bool> *vec) const;
 };
 
 class ArrayNFARegex : public Regex {

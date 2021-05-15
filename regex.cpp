@@ -15,14 +15,13 @@ int main(int argc, char *argv[]) {
 		fatal_error("Wrong number of arguments.");
 	}
 
-	// TODO: use a derived class' implementation.
 	Regex *regex = new ArrayNFARegex(argv[1]);
 	std::cout << regex->to_str() << std::endl;
 
-	// std::string s;
-	// while (std::getline(std::cin, s)) {
-	// 	std::cout << (regex->match(s)?"true":"false") << std::endl;
-	// }
+	std::string s;
+	while (std::getline(std::cin, s)) {
+		std::cout << (regex->match(s)?"true":"false") << std::endl;
+	}
 
 	delete regex;
 
