@@ -19,6 +19,9 @@ class Regex {
 	virtual bool match(std::string str) const;
   private:
 	std::string _r;
+	int regex_size(std::string regex) const;
+  protected:
+	int r_len;
 };
 
 void fatal_error(std::string err);

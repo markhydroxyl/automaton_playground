@@ -5,6 +5,7 @@
 #include <iostream>
 #include "regex.h"
 #include "graph_nfa.h"
+#include "array_nfa.h"
 
 int main(int argc, char *argv[]) {
 	if (argc == 1) {
@@ -15,13 +16,13 @@ int main(int argc, char *argv[]) {
 	}
 
 	// TODO: use a derived class' implementation.
-	Regex *regex = new GraphNFARegex(argv[1]);
+	Regex *regex = new ArrayNFARegex(argv[1]);
 	std::cout << regex->to_str() << std::endl;
 
-	std::string s;
-	while (std::getline(std::cin, s)) {
-		std::cout << (regex->match(s)?"true":"false") << std::endl;
-	}
+	// std::string s;
+	// while (std::getline(std::cin, s)) {
+	// 	std::cout << (regex->match(s)?"true":"false") << std::endl;
+	// }
 
 	delete regex;
 
@@ -39,7 +40,7 @@ void usage() {
 	std::cout << "\twhere exp is a valid regular expression." << std::endl;
 }
 
-Regex::Regex(std::string regex) : _r(regex) {}
+Regex::Regex(std::string regex) : _r(regex), r_len(regex_size(regex)) {}
 
 Regex::~Regex() {}
 
@@ -52,4 +53,24 @@ bool Regex::match(std::string str) const {
 std::string Regex::to_str() const {
 	fatal_error("Regex not implemented.");
 	return "";
+}
+
+int Regex::regex_size(std::string regex) const {
+	int layer = 0, cnt = 0;
+
+	for (std::string::const_iterator c = regex.cbegin(); c != regex.cend(); ++c) {
+		if (*c == '(') {
+			++layer;
+		} else if (*c == ')') {
+			if (--layer < 0)
+				fatal_error("Syntax error!");
+		} else {
+			++cnt;
+		}
+	}
+
+	if (layer != 0)
+		fatal_error("Syntax error!");
+
+	return cnt;
 }

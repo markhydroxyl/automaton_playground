@@ -1,25 +1,23 @@
 /**
  * Implementation of regex using NFAs, where NFA states
- * are represented as a graph and the transitions runs
- * along the graph, tracking the states.
+ * are represented as nodes in a graph and the transitions
+ * are edges in the graph, tracking the states.
  */
 
-#include <set>
 #include <map>
 #include <sstream>
 #include "graph_nfa.h"
 
 using std::string;
 typedef std::string::const_iterator str_iter;
-typedef std::vector<GraphNFAState **> PtrList;
 
-GraphNFAState::GraphNFAState(int t, GraphNFAState *n, GraphNFAState *f) : _t(t), next(n), fork(f) {}
+GraphNFA::GraphNFAState::GraphNFAState(int t, GraphNFAState *n, GraphNFAState *f) : _t(t), next(n), fork(f) {}
 
 /**
  * Builds a new, empty NFA.
  */
 GraphNFA::GraphNFA() : start(nullptr) {
-	dangling = new PtrList();
+	dangling = new std::vector<GraphNFAState **>();
 }
 
 /**
@@ -27,18 +25,16 @@ GraphNFA::GraphNFA() : start(nullptr) {
  */
 GraphNFA::GraphNFA(int t) {
 	start = new GraphNFAState(t, nullptr, nullptr);
-	dangling = new PtrList();
+	dangling = new std::vector<GraphNFAState **>();
 	dangling->push_back(&start->next);
 }
 
 /**
  * Builds a new NFA using the regex represented by the string iterators.
  */
-GraphNFA::GraphNFA(str_iter head, str_iter end) {
-	dangling = new PtrList();
-	if (build_nfa(head, end) != end) {
-		fatal_error("Syntax error in regex");
-	}
+GraphNFA::GraphNFA(string regex) {
+	dangling = new std::vector<GraphNFAState **>();
+	build_nfa(regex.cbegin(), regex.cend());
 	GraphNFAState *accept = new GraphNFAState(ACCEPT, nullptr, nullptr);
 	connect_dangling(accept);
 }
@@ -50,7 +46,7 @@ GraphNFA::~GraphNFA() {
 	delete dangling;
 }
 
-GraphNFARegex::GraphNFARegex(string regex) : Regex(regex), nfa(regex.cbegin(), regex.cend()) {}
+GraphNFARegex::GraphNFARegex(string regex) : Regex(regex), nfa(regex) {}
 
 GraphNFARegex::~GraphNFARegex() {
 	nfa.destroy_states();

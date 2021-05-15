@@ -13,7 +13,7 @@ CXXFLAGS = -D__USE_POSIX -g -Wall -Wextra -pedantic -std=gnu++11
 
 all : regex
 
-regex : regex.o graph_nfa.o
+regex : regex.o graph_nfa.o array_nfa.o
 	$(CXX) -o $@ $^
 
 clean :
