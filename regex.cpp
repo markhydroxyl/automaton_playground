@@ -3,6 +3,7 @@
  */
 
 #include <iostream>
+#include <ctype.h>
 #include "regex.h"
 #include "graph_nfa.h"
 #include "array_nfa.h"
@@ -39,7 +40,7 @@ void usage() {
 	std::cout << "\twhere exp is a valid regular expression." << std::endl;
 }
 
-Regex::Regex(std::string regex) : _r(regex), r_len(regex_size(regex)) {}
+Regex::Regex(std::string regex) : _r(regex), prs_regex(parse_regex(regex)) {}
 
 Regex::~Regex() {}
 
@@ -54,22 +55,119 @@ std::string Regex::to_str() const {
 	return "";
 }
 
-int Regex::regex_size(std::string regex) const {
-	int layer = 0, cnt = 0;
-
+std::vector<int> Regex::parse_regex(std::string regex) {
+	int layer = 0, brk = 0;
+	std::vector<int> prs_regex;
 	for (std::string::const_iterator c = regex.cbegin(); c != regex.cend(); ++c) {
-		if (*c == '(') {
+		int _c = *c;
+		switch(*c) {
+		  case '(':
 			++layer;
-		} else if (*c == ')') {
+			++brk;
+			_c = OP_BR;
+			break;
+		  case ')':
 			if (--layer < 0)
 				fatal_error("Syntax error!");
-		} else {
-			++cnt;
+		  	_c = CL_BR;
+			break;
+		  case '\\':
+			++c;
+			switch (*c) {
+			  case 'A':
+			  case 'a':
+				_c = ALPHA;
+				break;
+			  case '0':
+				_c = NUMER;
+				break;
+			  case ' ':
+				_c = WHTSP;
+				break;
+			  case '.':
+			  case '?':
+			  case '*':
+			  case '+':
+			  case '|':
+				_c = *c;
+				break;
+			  default:
+				fatal_error("Syntax error!");
+				break;
+			}
+			break;
+		  case '.':
+			_c = WLDCR;
+			break;
+		  case '?':
+			_c = KQUES;
+			break;
+		  case '*':
+			_c = KSTAR;
+			break;
+		  case '+':
+			_c = KPLUS;
+			break;
+		  case '|':
+			_c = R_UNN;
+			break;
+		  default:
+			;
 		}
+		prs_regex.push_back(_c);
 	}
 
 	if (layer != 0)
 		fatal_error("Syntax error!");
+	
+	r_len = prs_regex.size() - 2*brk;
+	return prs_regex;
+}
 
-	return cnt;
+bool char_match(char c, int _t) {
+	bool a;
+	switch (_t)	{
+	  case WLDCR:
+		a = true;
+		break;
+	  case ALPHA:
+		a = isalpha(c);
+		break;
+	  case NUMER:
+		a = isalnum(c);
+		break;
+	  case WHTSP:
+		a = isspace(c);
+		break;
+	  default:
+		a = (c == _t);
+	}
+	return a;
+}
+
+std::string transition_tostr(int _t) {
+	std::string ret;
+	switch(_t) {
+	  case WLDCR:
+		ret = "WLDCR";
+		break;
+	  case ALPHA:
+		ret = "ALPHA";
+		break;
+	  case NUMER:
+		ret = "NUMER";
+		break;
+	  case WHTSP:
+		ret = "WHTSP";
+		break;
+	  case ACCEPT:
+		ret = "ACC";
+		break;
+	  case EPS:
+		ret = "EPS";
+		break;
+	  default:
+		ret.assign((char*)(&_t));
+	}
+	return ret;
 }

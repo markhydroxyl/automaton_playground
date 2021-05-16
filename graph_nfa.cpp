@@ -30,11 +30,11 @@ GraphNFA::GraphNFA(int t) {
 }
 
 /**
- * Builds a new NFA using the regex represented by the string iterators.
+ * Builds a new NFA from the given regex.
  */
-GraphNFA::GraphNFA(string regex) {
+GraphNFA::GraphNFA(const std::vector<int> *regex) {
 	dangling = new std::vector<GraphNFAState **>();
-	build_nfa(regex.cbegin(), regex.cend());
+	build_nfa(regex, 0);
 	GraphNFAState *accept = new GraphNFAState(ACCEPT, nullptr, nullptr);
 	connect_dangling(accept);
 }
@@ -46,7 +46,7 @@ GraphNFA::~GraphNFA() {
 	delete dangling;
 }
 
-GraphNFARegex::GraphNFARegex(string regex) : Regex(regex), nfa(regex) {}
+GraphNFARegex::GraphNFARegex(string regex) : Regex(regex), nfa(&prs_regex) {}
 
 GraphNFARegex::~GraphNFARegex() {
 	nfa.destroy_states();
@@ -114,7 +114,7 @@ string GraphNFA::to_str() const {
 			PRINT_PTR(queue[i]->fork);
 			break;
 		  default:
-			ss << " -" << (char) queue[i]->_t << "-> ";
+			ss << " -" << transition_tostr(queue[i]->_t) << "-> ";
 			PRINT_PTR(queue[i]->next);
 		}
 		ss << std::endl;
@@ -123,41 +123,37 @@ string GraphNFA::to_str() const {
 	return ss.str();
 }
 
-/**
- * Concatenates a new NFA represented by a regex.
- *
- * Returns the regex position immediately after the last processed char.
- */
-str_iter GraphNFA::build_nfa(str_iter head, str_iter end) {
+size_t GraphNFA::build_nfa(const std::vector<int> *regex, size_t offset) {
 	GraphNFA *n = new GraphNFA();
-	for (; head != end; ++head) {
-		if (*head == '?')
+	for (; offset < regex->size(); ++offset) {
+		int c = (*regex)[offset];
+		if (c == KQUES)
 			n->unary(true, false);
-		else if (*head == '*')
+		else if (c == KSTAR)
 			n->unary(true, true);
-		else if (*head == '+')
+		else if (c == KPLUS)
 			n->unary(false, true);
-		else if (*head == ')')
+		else if (c == CL_BR)
 			break;
-		else if (*head == '(') {
+		else if (c == OP_BR) {
 			concat(n);
 			n = new GraphNFA();
-			head = n->build_nfa(++head, end);
-			if (head == end) break;
-		} else if (*head == '|') {
+			offset = n->build_nfa(regex, ++offset);
+			if (offset == regex->size()) break;
+		} else if (c == R_UNN) {
 			concat(n);
 			n = new GraphNFA();
-			head = n->build_nfa(++head, end);
+			offset = n->build_nfa(regex, ++offset);
 			nfa_union(n);
 			n = new GraphNFA();
-			if (head == end) break;
+			if (offset == regex->size()) break;
 		} else {
 			concat(n);
-			n = new GraphNFA(*head);
+			n = new GraphNFA(c);
 		}
 	}
 	concat(n);
-	return head;
+	return offset;
 }
 
 /**
@@ -250,7 +246,7 @@ bool GraphNFA::match(str_iter head, str_iter end) const {
 	add_to_state_set(start, cur);
 	for (; head != end; ++head) {
 		for (GraphNFAState *s : *cur) {
-			if (s->_t == *head) // if transition matches
+			if (char_match(*head, s->_t)) // if transition matches
 				add_to_state_set(s->next, next);
 		}
 		t = cur; cur = next; next = t; // swap

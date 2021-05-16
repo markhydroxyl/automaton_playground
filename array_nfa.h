@@ -7,14 +7,12 @@
 #define MATRIX_NFA_H
 
 #include <array>
-#include <string>
-#include <vector>
 #include <utility>
 #include "regex.h"
 
 struct ArrayNFA {
   public:
-	ArrayNFA(std::string regex, int len);
+	ArrayNFA(const std::vector<int> *regex, int len);
 	std::string to_str() const;
 	bool match(std::string::const_iterator head, std::string::const_iterator end) const;
   private:
@@ -28,7 +26,7 @@ struct ArrayNFA {
 		~ArrayNFAElem();
 		void reinit(int start);
 		void reinit(int start, int _t);
-		std::string::const_iterator build_nfa(std::string::const_iterator head, std::string::const_iterator end);
+		size_t build_nfa(const std::vector<int> *regex, size_t head);
 
 		void connect_dangling(int idx);
 		void unary(bool zero, bool inf);
@@ -38,6 +36,7 @@ struct ArrayNFA {
 
 	int start;
 	std::vector<std::array<int, 3>> states;
+
 	void add_to_state_set(int idx, std::vector<bool> *vec) const;
 };
 

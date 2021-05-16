@@ -6,8 +6,6 @@
 #ifndef GRAPH_NFA_H
 #define GRAPH_NFA_H
 
-#include <string>
-#include <vector>
 #include <set>
 #include "regex.h"
 
@@ -15,7 +13,7 @@ struct GraphNFA {
   public:
 	GraphNFA();
 	GraphNFA(int t);
-	GraphNFA(std::string regex);
+	GraphNFA(const std::vector<int> *regex);
 	~GraphNFA();
 	void destroy_states();
 	std::string to_str() const;
@@ -31,7 +29,7 @@ struct GraphNFA {
 	GraphNFAState *start;
 	std::vector<GraphNFAState **> *dangling;
 
-	std::string::const_iterator build_nfa(std::string::const_iterator head, std::string::const_iterator end);
+	size_t build_nfa(const std::vector<int> *regex, size_t offset);
 	void connect_dangling(GraphNFAState *s);
 	void concat(int c);
 	void concat(GraphNFA *n);

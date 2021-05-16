@@ -33,14 +33,14 @@ void ArrayNFA::ArrayNFAElem::reinit(int start, int _t) {
 	this->dangling->push_back(std::make_pair(start, 1));
 }
 
-ArrayNFA::ArrayNFA(string regex, int len) : start(-1), states(len+1, {ACCEPT, -1, -1}) {
+ArrayNFA::ArrayNFA(const std::vector<int> *regex, int len) : start(-1), states(len+1, {ACCEPT, -1, -1}) {
 	ArrayNFAElem n(&states, 0);
-	n.build_nfa(regex.cbegin(), regex.cend());
+	n.build_nfa(regex, 0);
 	n.connect_dangling(len);
 	start = n.start;
 }
 
-ArrayNFARegex::ArrayNFARegex(string regex) : Regex(regex), nfa(regex, r_len) {}
+ArrayNFARegex::ArrayNFARegex(string regex) : Regex(regex), nfa(&prs_regex, r_len) {}
 
 ArrayNFARegex::~ArrayNFARegex() {}
 
@@ -56,12 +56,7 @@ string ArrayNFA::to_str() const {
 
 		rs[1] << std::setw(S_WIDTH) << i;
 
-		if (states[i][0] == ACCEPT)
-			rs[2] << std::setw(S_WIDTH) << "ACC";
-		else if (states[i][0] == EPS)
-			rs[2] << std::setw(S_WIDTH) << "EPS";
-		else
-			rs[2] << std::setw(S_WIDTH) << (char) states[i][0];
+		rs[2] << std::setw(S_WIDTH) << transition_tostr(states[i][0]);
 
 		if (states[i][1] == -1)
 			rs[3] << std::setw(S_WIDTH) << "NULL";
@@ -92,36 +87,37 @@ string ArrayNFARegex::to_str() const {
 	return nfa.to_str();
 }
 
-str_iter ArrayNFA::ArrayNFAElem::build_nfa(str_iter head, str_iter end) {
+size_t ArrayNFA::ArrayNFAElem::build_nfa(const std::vector<int> *regex, size_t offset) {
 	ArrayNFAElem n(states, tail);
-	for (; head != end; ++head) {
-		if (*head == '?')
+	for (; offset < regex->size(); ++offset) {
+		int c = (*regex)[offset];
+		if (c == KQUES)
 			n.unary(true, false);
-		else if (*head == '*')
+		else if (c == KSTAR)
 			n.unary(true, true);
-		else if (*head == '+')
+		else if (c == KPLUS)
 			n.unary(false, true);
-		else if (*head == ')')
+		else if (c == CL_BR)
 			break;
-		else if (*head == '(') {
+		else if (c == OP_BR) {
 			concat(&n);
 			n.reinit(tail);
-			head = n.build_nfa(++head, end);
-			if (head == end) break;
-		} else if (*head == '|') {
+			offset = n.build_nfa(regex, ++offset);
+			if (offset == regex->size()) break;
+		} else if (c == R_UNN) {
 			concat(&n);
 			n.reinit(tail);
-			head = n.build_nfa(++head, end);
+			offset = n.build_nfa(regex, ++offset);
 			nfa_union(&n);
 			n.reinit(tail);
-			if (head == end) break;
+			if (offset == regex->size()) break;
 		} else {
 			concat(&n);
-			n.reinit(tail, *head);
+			n.reinit(tail, c);
 		}
 	}
 	concat(&n);
-	return head;
+	return offset;
 }
 
 void ArrayNFA::ArrayNFAElem::connect_dangling(int idx) {
@@ -183,7 +179,7 @@ bool ArrayNFA::match(str_iter head, str_iter end) const {
 	add_to_state_set(start, cur);
 	for (; head != end; ++head) {
 		for (unsigned idx=0; idx < size; ++idx) {
-			if ((*cur)[idx] && states[idx][0] == *head) // if in cur set and correct transition
+			if ((*cur)[idx] && char_match(*head, states[idx][0])) // if in cur set and correct transition
 				add_to_state_set(states[idx][1], next);
 
 			(*cur)[idx] = false;
