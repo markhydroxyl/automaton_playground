@@ -56,7 +56,7 @@ string ArrayNFA::to_str() const {
 
 		rs[1] << std::setw(S_WIDTH) << i;
 
-		rs[2] << std::setw(S_WIDTH) << transition_tostr(states[i][0]);
+		rs[2] << std::setw(S_WIDTH) << transition_to_str(states[i][0]);
 
 		if (states[i][1] == -1)
 			rs[3] << std::setw(S_WIDTH) << "NULL";

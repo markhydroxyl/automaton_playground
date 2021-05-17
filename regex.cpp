@@ -84,6 +84,9 @@ std::vector<int> Regex::parse_regex(std::string regex) {
 			  case ' ':
 				_c = WHTSP;
 				break;
+			  case '(':
+			  case ')':
+			  case '\\':
 			  case '.':
 			  case '?':
 			  case '*':
@@ -93,7 +96,6 @@ std::vector<int> Regex::parse_regex(std::string regex) {
 				break;
 			  default:
 				fatal_error("Syntax error!");
-				break;
 			}
 			break;
 		  case '.':
@@ -145,7 +147,7 @@ bool char_match(char c, int _t) {
 	return a;
 }
 
-std::string transition_tostr(int _t) {
+std::string transition_to_str(int _t) {
 	std::string ret;
 	switch(_t) {
 	  case WLDCR:

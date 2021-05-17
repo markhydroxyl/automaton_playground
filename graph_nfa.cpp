@@ -114,7 +114,7 @@ string GraphNFA::to_str() const {
 			PRINT_PTR(queue[i]->fork);
 			break;
 		  default:
-			ss << " -" << transition_tostr(queue[i]->_t) << "-> ";
+			ss << " -" << transition_to_str(queue[i]->_t) << "-> ";
 			PRINT_PTR(queue[i]->next);
 		}
 		ss << std::endl;

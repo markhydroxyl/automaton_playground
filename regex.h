@@ -37,6 +37,6 @@ void fatal_error(std::string err);
 void usage();
 
 bool char_match(char c, int _t);
-std::string transition_tostr(int _t);
+std::string transition_to_str(int _t);
 
 #endif
